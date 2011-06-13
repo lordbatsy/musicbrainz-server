@@ -25,6 +25,7 @@ has_field 'labels'           => ( type => 'Repeatable' );
 has_field 'labels.catalog_number' => ( type => 'Text' );
 has_field 'labels.deleted'   => ( type => 'Checkbox' );
 has_field 'labels.label_id'  => ( type => 'Text' );
+has_field 'labels.label_gid' => ( type => 'Text' );
 has_field 'labels.name'      => ( type => 'Text' );
 
 has_field 'barcode'          => ( type => '+MusicBrainz::Server::Form::Field::Barcode' );
@@ -106,7 +107,9 @@ after 'BUILD' => sub {
             my $label = $self->init_object->labels->[$_]->label;
 
             my $name = $label ? $label->name : '';
+            my $gid = $label ? $label->gid : '';
             $self->field ('labels')->fields->[$_]->field ('name')->value ($name);
+            $self->field ('labels')->fields->[$_]->field ('label_gid')->value ($gid);
         }
 
         if (defined $self->init_object->latest_annotation)

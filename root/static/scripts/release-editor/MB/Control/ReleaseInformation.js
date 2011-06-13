@@ -30,9 +30,9 @@ MB.Control.ReleaseLabel = function($row, parent, labelno) {
 
     if (!self.$row)
     {
-        self.$catno_message = $('div.catno-container:first').clone ();
-        self.$catno_message.insertAfter ($('div.catno-container:last'));
-        self.$catno_message.hide ();
+        self.$message = $('div.label-message-container:first').clone ();
+        self.$message.insertAfter ($('div.label-message-container:last'));
+        self.$message.hide ();
 
         self.$row = $('div.release-label:first').clone ();
         self.$row.find ('input.label-id').val ('');
@@ -77,9 +77,14 @@ MB.Control.ReleaseLabel = function($row, parent, labelno) {
      */
     self.selected = function (event, data) {
         self.$id.val(data.id);
+        self.$gid.val(data.gid);
         self.$name.removeClass('error');
+        self.$name.data ('mb_selected_name', data.name);
         self.$name.val(data.name);
         self.updateLookupPerformed ();
+
+        self.comment = data.comment;
+        self.labelUpdate ();
 
         event.preventDefault();
         return false;
@@ -101,21 +106,97 @@ MB.Control.ReleaseLabel = function($row, parent, labelno) {
 
         if (self.$catno.val ().match (/^B00[0-9A-Z]{7}$/))
         {
-            self.$catno.data ('bubble').show ();
+            self.$bubble.show ();
+            self.$bubble.$container
+                .find ('p.catno').show ().end ()
+                .find ('p.label').hide ();
         }
         else
         {
-            self.$catno.data ('bubble').hide ();
+            self.$bubble.hide ();
         }
     };
 
+    self.labelUpdate = function () {
+        var gid = self.$gid.val ();
+        var name = self.$name.val ();
+
+        if (gid)
+        {
+            self.$bubble.show ();
+            self.$bubble.$container
+                .find ('p.label').show ().end ()
+                .find ('p.catno').hide ();
+
+            self.$bubble.$container.find ('a.label-preview')
+                .attr ('href', '/label/' + gid)
+                .text (name);
+
+            if (self.comment)
+            {
+                self.$bubble.$container.find ('span.label-comment')
+                    .show ().text (' (' + self.comment + ')');
+            }
+            else
+            {
+                self.$bubble.$container.find ('a.label-comment').hide ();
+            }
+        }
+        else
+        {
+            self.$bubble.hide ();
+        }
+    };
+
+    self.nameFocused = function (event) {
+        self.labelUpdate ();
+    };
+
+    self.nameBlurred = function (event) {
+        /* FIXME: some code duplication here between label and artist,
+         * possibly refactor into a common base class or some kind of
+         * mixin class. --warp.
+
+        /* if the label was cleared the user probably wants to delete it,
+           make sure ids are emptied out too. */
+        if (self.$name.val() === '')
+        {
+            self.$gid.val ('');
+            self.$id.val ('');
+            self.$name.data ('mb_selected_name', '');
+        }
+
+        /* if the label name was changed without performing another
+         * lookup the identifiers should be cleared. */
+        if (self.$name.data ('mb_selected_name')
+            && (self.$name.val () !== self.$name.data ('mb_selected_name')))
+        {
+            self.$gid.val ('');
+            self.$id.val ('');
+            self.$name.data ('mb_selected_name', '');
+        }
+
+        /* mark the field as having an error if no lookup was
+         * performed for this label. */
+        if (self.$name.val() !== "" && self.$id.val() === "")
+        {
+            self.$name.addClass('error');
+        }
+
+        self.labelUpdate ();
+        self.updateLookupPerformed ();
+    };
+
     self.$id = self.$row.find('input.label-id');
+    self.$gid = self.$row.find('input.label-gid');
     self.$name = self.$row.find('input.label-name');
     self.$catno = self.$row.find('input.catno');
-    self.$catno_message = $('div.catno').eq(self.labelno);
+    self.$message = $('div.label-message.bubble').eq(self.labelno);
     self.$deleted = self.$row.find ('span.remove-label input');
 
     self.$catno.bind ('change keyup focus', self.catnoUpdate);
+    self.$name.bind ('blur.mb', self.nameBlurred);
+    self.$name.bind ('focus.mb', self.nameFocused);
     MB.Control.Autocomplete ({
         'input': self.$name,
         'entity': 'label',
@@ -131,6 +212,10 @@ MB.Control.ReleaseLabel = function($row, parent, labelno) {
         self.markDeleted ();
     }
 
+    self.parent.bubbles.add (self.$row.find ('span.remove-label'), self.$message);
+    self.$bubble = self.$row.find ('span.remove-label').data ('bubble');
+
+    self.labelUpdate ();
     self.updateLookupPerformed ();
 
     return self;
@@ -373,8 +458,6 @@ MB.Control.ReleaseInformation = function() {
         var l = MB.Control.ReleaseLabel($row, self, labelno);
 
         self.labels.push (l);
-
-        MB.Control.BubbleDocBase (self.bubbles, l.$catno, l.$catno_message);
 
         return l;
     };

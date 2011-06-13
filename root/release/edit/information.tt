@@ -69,8 +69,10 @@
 
       <div class="label-container" style="padding: 0.5em 0">
         [% FOR field=form.field('labels').fields %]
+        [%- label = field.item -%]
         <div class="release-label">
           [%- r.hidden(field.field('label_id'), class => 'label-id') -%]
+          [%- r.hidden(field.field('label_gid'), class => 'label-gid') -%]
 
           [%- r.label(field.field('name'), l('Label'), class => 'label-name') -%]
           <span class="label autocomplete">
@@ -86,7 +88,6 @@
               <img src="/static/images/icons/delete_row.png" title="[% l('Remove Label') %]" alt="[% l('Remove Label') %]" />
             </a>
           </span>
-
         </div>
         [% END %]
 
@@ -153,13 +154,19 @@
     </div>
 
     [% FOR field=form.field('labels').fields %]
-    <div class="catno-container" style="display: none">
-      <div class="catno bubble">
-        <p>
+    <div class="label-message-container" style="display: none">
+      <div class="label-message bubble">
+        <p class="catno">
           [% l('The catalog number you have entered looks like an Amazon ASIN.') %]
         </p>
-        <p>
+        <p class="catno">
           [% l('If this is an Amazon ASIN, please do not enter it in the catalog number field, but add it as a URL relationship later.') %]
+        </p>
+        <p class="label">
+          [%- l('You have selected {label}{comment}.', {
+                  label => '<a class="label-preview" href=""></a>',
+                  comment => '<span class="label-comment"></span>'
+              }) -%]
         </p>
       </div>
     </div>

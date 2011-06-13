@@ -170,7 +170,6 @@ MB.Control.BubbleBase = function (parent, $target, $content, offset) {
         {
             /* show content when an input field is focused. */
             self.$target.bind ('focus.mb', function (event) {
-
                 self.show ();
             });
         }
