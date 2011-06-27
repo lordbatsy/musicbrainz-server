@@ -1,0 +1,61 @@
+[% BLOCK layout_head %]
+	<style>
+		#mb-coverart img{
+		width: 100px;
+		}
+	
+		.mb-title{
+		font-size: 1.5em;
+		}
+	
+		.mb-trackartist{
+		font-size: .75em;
+		}
+
+		#mb-container{
+		background-color: #c0c0c0;
+		padding: 10px;
+		}
+	</style>
+
+		<script src="/ws/widgets/rcordingwidget" type="text/javascript"></script>
+		<script type="text/javascript">
+
+			var recordingwidget = jQuery.parseJSON(recordingwidget);
+
+			var recordingreleasestring = '';
+			$.each(recordingwidget.releases,function (index,value){
+
+				recordingreleasestring = recordingreleasestring + '<a href="http://www.musicbrainz.org/release/' + value.mbid + '">' + value.title + '</a> (' + value.date + ')<br />';
+				
+			}
+			);
+		console.log(recordingreleasestring);
+
+                        $(document).ready(function () {
+
+			$('#mb-header').html('<span class="mb-title"><a href="http://www.musicbrainz.org/artist/' + recordingwidget.mbid + '">' + recordingwidget.title + '</a></span> by <a href="http://www.musicbrainz.org/artist/' + recordingwidget['artist-credit'][0].mbid + '">' + recordingwidget['artist-credit'][0].name + '</a><br />Appears on:<br />');
+
+			$('#mb-releases').html(recordingreleasestring);
+
+                        });
+
+		</script>
+	</head>
+	
+	<body>
+	
+<div id="mb-container" class="mb-container">
+	<div id="mb-header" class="mb-header">
+	</div>
+
+<div id="mb-releases" class="mb-list">
+</div>
+
+</div>
+
+
+	</body>
+
+
+[%- END -%]

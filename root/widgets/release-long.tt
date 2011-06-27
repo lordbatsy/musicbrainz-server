@@ -1,0 +1,81 @@
+[% BLOCK layout_head %]
+	<style>
+		#mb-coverart img{
+		width: 100px;
+		}
+	
+		.mb-title{
+		font-size: 1.5em;
+		}
+	
+		.mb-trackartist{
+		font-size: .75em;
+		}
+
+		#mb-container{
+		background-color: #c0c0c0;
+		padding: 10px;
+		}
+	</style>
+
+
+		<script src="/ws/widgets/releasewidget" type="text/javascript"></script>
+		<script type="text/javascript">
+
+			var releasewidget = jQuery.parseJSON(releasewidget);
+
+			var tracklistgrab = [];
+			$.each(releasewidget.tracklist,function (index,value){
+			$.each(value,function (index,value){
+				var titlestring = '<a class="mb-tracktitle" href="http://www.musicbrainz.org/recording/' + value.mbid + '">' + value.title + '</a><br />';
+				var artistarray = [];
+				$.each(value['artist-credit'],function (index,value){
+					var artiststring = '<span class="mb-trackartist"><a href="http://www.musicbrainz.org/artist/' + value.mbid + '">' + value['link-phrase'] + '</a>';
+					if (value['join-phrase']){
+					artiststring = artiststring + value['join-phrase'];
+					}
+					artiststring = artiststring + '</span>';
+					artistarray.push(artiststring);
+					});
+				tracklistgrab.push(titlestring+artistarray.join(' ') + '<br />');
+				}
+				);
+			}
+			);
+
+			
+
+
+                        $(document).ready(function () {
+
+			$('#mb-header').html('<span class="mb-title"><a href="http://musicbrainz.org/release/' + releasewidget.mbid + '">' + releasewidget.title + '</a></span><br />' + '<a href="http://musicbrainz.org/artist/' + releasewidget['artist-credit'][0].mbid + '">' + releasewidget['artist-credit'][0]['link-phrase'] + '</a>');
+
+			$('#mb-coverart').html('<img src="' + releasewidget['cover-art'] + '" alt="' + releasewidget.title + '" />');
+
+			$('#mb-tracklist').html(tracklistgrab.join(' '));
+
+
+                        });
+
+		</script>
+
+
+[%- END -%]
+
+[%- WRAPPER 'layout.tt' -%]
+
+<div id="mb-container" class="mb-container">
+	<div id="mb-header" class="mb-header">
+	</div>
+
+<div id="mb-coverart" class="mb-coverart">
+</div>
+
+<div id="mb-tracklist" class="mb-list">
+</div>
+
+</div>
+
+</body>
+
+[%- END -%]
