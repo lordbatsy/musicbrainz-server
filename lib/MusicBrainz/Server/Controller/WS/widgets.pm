@@ -33,10 +33,10 @@ sub releasewidget : Chained('root') PathPart('releasewidget') Args(0) {
 
     $c->res->content_type('text/javascript; charset=utf-8');
     $c->res->body(<<'RELEASE');
-var releasewidget = '{\
-\
-	"mbid": "eefc59f9-9381-4ea3-a256-878aa83d378e",\
-	"title": "Pokémon Christmas Bash",\
+var releasewidget = '{\\
+\\
+	"mbid": "eefc59f9-9381-4ea3-a256-878aa83d378e",\\
+	"title": "Pokémon Christmas Bash",\\
 	"artist-credit": [{\
 		"mbid": "89ad4ac3-39f7-470e-963a-56509c546377",\
 		"link-phrase": "Various Artists"\
@@ -95,62 +95,63 @@ sub artistwidget : Chained('root') PathPart('artistwidget') Args(0) {
     my $mbid = "39c6af62-6918-4d1d-9666-1fc78149ea67";
 
     my $artist_model = $c->model('Artist')->get_by_gid($mbid);
-    my @releases_nonvarious = $c->model('Release')->find_by_artist(
-                $artist_model->id, 3, 0, (), ()
+    my @releases_nonvarious = $c->model('ReleaseGroup')->find_by_artist(
+                $artist_model->id, 3, 0, undef, 'DESC'
     );
 
-    my @releases_various = $c->model('Release')->find_for_various_artists(
-                $artist_model->id, 3, 0, (), ()
+    my @releases_various = $c->model('ReleaseGroup')->find_by_track_artist(
+                $artist_model->id, 3, 0, 'DESC'
     );
 
-   @releases_various = $releases_various[0];
-   @releases_nonvarious = $releases_nonvarious[0];
+#    my @foo = @{ $releases_various[0] };
+
+   @releases_various = @{ $releases_various[0] };
+   @releases_nonvarious =@{ $releases_nonvarious[0] };
 
     my $artist_name = $artist_model->name;
     my $artist_gid = $artist_model->gid;
     my $release_block = "";
     my @releases = ();
 
-#    while(scalar (@releases) < 3) {
-#
-#        if (scalar (@releases_various) != 0 && (scalar (@releases_nonvarious) == 0 || $releases_various[0]->{date} > $releases_nonvarious[0]->{date})) {
-#            push(@releases, shift @releases_various)
-#        }
-#        elsif (scalar (@releases_nonvarious) != 0) {
-#            push(@releases, shift @releases_nonvarious)
-#        }
-#        else {
-#        last;
-#        }
-#    }
+    while(scalar (@releases) < 3) {
 
-        foreach my $release (@releases_nonvarious) {
-            
+        if (scalar (@releases_various) != 0 && (scalar (@releases_nonvarious) == 0 || $releases_various[0]->{date} > $releases_nonvarious[0]->{date})) {
+            push(@releases, shift @releases_various)
+        }
+        elsif (scalar (@releases_nonvarious) != 0) {
+            push(@releases, shift @releases_nonvarious)
+        }
+        else {
+        last;
+        }
+    }
+
+        foreach my $release (@releases) {
+            my $this_mbid = $release->gid;
+            my $this_title = $release->name;
+            my $this_date = $release->first_release_date->format();
+            $release_block .= <<"RELEASEBLOCK";            
+            {\\
+            "mbid": "$this_mbid",\\
+            "title": "$this_title",\\
+            "date": "$this_date",\\
+            }\\
+RELEASEBLOCK
+        if (!($this_mbid eq $releases[2]->gid))
+            {
+            $release_block .= ',';
+            }
         }
 
     $c->res->content_type('text/javascript; charset=utf-8');
     $c->res->body(<<"ARTIST");
-var artistwidget = '{\
-	"mbid": "$artist_gid",\
-	"name": "$artist_name",\
-
-	"releases": [{\
-		"mbid": "@releases_various[0]",\
-		"title": "Yu-Gi-Oh! Music to Duel By",\
-		"date": "2002-10-29"\
-		},\
-
-		{\
-		"mbid": "eefc59f9-9381-4ea3-a256-878aa83d378e",\
-		"title": "Pokémon Christmas Bash",\
-		"date": "2001-10"\
-		},\
-		{\
-		"mbid": "f3ed789e-c571-469e-a2c5-abe3c19fbb6c",\
-		"title": "Pokémon 3: The Ultimate Soundtrack",\
-		"date": "2001-04-03"\
-		}\
-		]\
+var artistwidget = '{\\
+	"mbid": "$artist_gid",\\
+	"name": "$artist_name",\\
+\\
+	"release-groups": [\\
+                  $release_block\\
+		]\\
 }';
 ARTIST
 

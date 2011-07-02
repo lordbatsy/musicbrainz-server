@@ -103,7 +103,7 @@ sub find_by_name_prefix_va
 
 sub find_by_artist
 {
-    my ($self, $artist_id, $limit, $offset, $types) = @_;
+    my ($self, $artist_id, $limit, $offset, $types, $date_sort) = @_;
 
     my $where_types = $types ? 'AND type IN ('.placeholders(@$types).')' : '';
 
@@ -124,9 +124,9 @@ sub find_by_artist
                     $where_types
                  ORDER BY
                     rg.type,
-                    rgm.first_release_date_year,
-                    rgm.first_release_date_month,
-                    rgm.first_release_date_day,
+                    rgm.first_release_date_year $date_sort,
+                    rgm.first_release_date_month $date_sort,
+                    rgm.first_release_date_day $date_sort,
                     musicbrainz_collate(name.name)
                  OFFSET ?";
     return query_to_list_limited(
@@ -144,7 +144,7 @@ sub find_by_artist
 
 sub find_by_track_artist
 {
-    my ($self, $artist_id, $limit, $offset) = @_;
+    my ($self, $artist_id, $limit, $offset, $date_sort) = @_;
     my $query = "SELECT DISTINCT " . $self->_columns . ",
                     rgm.first_release_date_year,
                     rgm.first_release_date_month,
@@ -175,9 +175,9 @@ sub find_by_track_artist
                       WHERE acn.artist = ?)
                  ORDER BY
                     rg.type,
-                    rgm.first_release_date_year,
-                    rgm.first_release_date_month,
-                    rgm.first_release_date_day,
+                    rgm.first_release_date_year $date_sort,
+                    rgm.first_release_date_month $date_sort,
+                    rgm.first_release_date_day $date_sort,
                     musicbrainz_collate(name.name)
                  OFFSET ?";
     return query_to_list_limited(

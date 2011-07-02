@@ -114,7 +114,7 @@ sub load
 
 sub find_by_artist
 {
-    my ($self, $artist_id, $limit, $offset, $statuses, $types) = @_;
+    my ($self, $artist_id, $limit, $offset, $statuses, $types, $date_sort) = @_;
 
     my $where_statuses = _where_status_in (@$statuses);
     my ($join_types, $where_types) = _where_type_in (@$types);
@@ -130,7 +130,7 @@ sub find_by_artist
                  WHERE acn.artist = ?
                  $where_statuses
                  $where_types
-                 ORDER BY date_year, date_month, date_day,
+                 ORDER BY date_year $date_sort, date_month $date_sort, date_day $date_sort,
                           country.name, barcode, musicbrainz_collate(name.name)
                  OFFSET ?";
     return query_to_list_limited(
@@ -224,7 +224,7 @@ sub find_by_track_artist
 
 sub find_for_various_artists
 {
-    my ($self, $artist_id, $limit, $offset, $statuses, $types) = @_;
+    my ($self, $artist_id, $limit, $offset, $statuses, $types, $date_sort) = @_;
 
     my $where_statuses = _where_status_in (@$statuses);
     my ($join_types, $where_types) = _where_type_in (@$types);
@@ -244,7 +244,7 @@ sub find_for_various_artists
                      WHERE acn.artist = ?)
                  $where_statuses
                  $where_types
-                 ORDER BY date_year, date_month, date_day, musicbrainz_collate(name.name)
+                 ORDER BY date_year $date_sort, date_month $date_sort, date_day $date_sort, musicbrainz_collate(name.name)
                  OFFSET ?";
     return query_to_list_limited(
         $self->c->sql, $offset, $limit, sub { $self->_new_from_row(@_) },
