@@ -2,8 +2,32 @@ package MusicBrainz::Server::Controller::WS::widgets;
 
 use Moose;
 BEGIN { extends 'MusicBrainz::Server::Controller'; }
+use Data::OptList;
 use MusicBrainz::Server::Data::Artist;
 use MusicBrainz::Server::Data::Release;
+use MusicBrainz::Server::WebService::JSONSerializer;
+use MusicBrainz::Server::WebService::Validator;
+use Readonly;
+
+my $ws_defs = Data::OptList::mkopt([
+    "artistwidget" => {
+        method => 'GET',
+    },
+    "releasewidget" => {
+        method => 'GET',
+    }
+]);
+
+with 'MusicBrainz::Server::WebService::Validator' =>
+{
+     defs => $ws_defs,
+     version => 'widgets',
+     default_serialization_type => 'json',
+};
+
+Readonly my %serializers => (
+    json => 'MusicBrainz::Server::WebService::JSONSerializer',
+);
 
 sub bad_req : Private
 {
@@ -24,66 +48,37 @@ sub end : Private
 sub root : Chained('/') PathPart("ws/widgets") CaptureArgs(0)
 {
     my ($self, $c) = @_;
+    $self->validate($c, \%serializers) or $c->detach('bad_req');
 }
 
 # Release widget
 
 sub releasewidget : Chained('root') PathPart('releasewidget') Args(0) {
     my ($self, $c) = @_;
+    my $releasewidget = { mbid => "", name => "", artistcredit => [], date =>"", tracklist => []};
+   
+    my $mbid = "eefc59f9-9381-4ea3-a256-878aa83d378e";
+
+    my $release_model = $c->model('Release')->get_by_gid($mbid);
+    $c->model('Release')->load_meta($release_model);
+
+    $releasewidget->{name} = $release_model->name;
+    $releasewidget->{mbid} = $release_model->gid;
+    $c->model('ArtistCredit')->load($release_model);
+
+        foreach my $artist (@{$release_model->artist_credit->names}) {
+
+            my $this_artist = { mbid => "", link_phrase => "", join_phrase => "" };
+
+            $this_artist->{mbid} = $artist->{artist}->{gid};
+            $this_artist->{link_phrase} = $artist->{name};
+            $this_artist->{join_phrase} = $artist->{join_phrase};
+
+            push(@{$releasewidget->{artistcredit}}, $this_artist);
+        }
 
     $c->res->content_type('text/javascript; charset=utf-8');
-    $c->res->body(<<'RELEASE');
-var releasewidget = '{\\
-\\
-	"mbid": "eefc59f9-9381-4ea3-a256-878aa83d378e",\\
-	"title": "Pokémon Christmas Bash",\\
-	"artist-credit": [{\
-		"mbid": "89ad4ac3-39f7-470e-963a-56509c546377",\
-		"link-phrase": "Various Artists"\
-		}],\
-	"date": "2001-10",\
-	"tracklist": [[\
-			{\
-			"mbid": "3445bbcf-a505-4a89-94ba-17ed72618797",\
-			"title": "Pokémon Christmas Bash",\
-			"artist-credit": [{\
-				"mbid": "9b012d6a-3fcb-4ed0-b81a-2e192c0c8df1",\
-				"link-phrase": "Veronica Taylor",\
-				"join-phrase": ", "\
-				},\
-				{\
-				"mbid": "39c6af62-6918-4d1d-9666-1fc78149ea67",\
-				"link-phrase": "Eric Stuart",\
-				"join-phrase": ", "\
-				},\
-				{\
-				"mbid": "94449da0-cd38-425c-ad05-cf526c296a49",\
-				"link-phrase": "Rachael Lillis",\
-				"join-phrase": " & "\
-				},\
-				{\
-				"mbid": "cc8764e8-486d-4e44-818f-e9b66edb3f88",\
-				"link-phrase": "Maddie Blaustein"\
-				}]\
-			},\
-			{\
-			"mbid": "5360160a-83b2-4085-b0a1-094536c02d03",\
-			"title": "I\'m Giving Santa a Pikachu for Christmas",\
-			"artist-credit": [{\
-				"mbid": "9b012d6a-3fcb-4ed0-b81a-2e192c0c8df1",\
-				"link-phrase": "Veronica Taylor",\
-				"join-phrase": " & "\
-				},\
-				{\
-				"mbid": "507e2de5-0ba4-4f58-9c11-73a1332da069",\
-				"link-phrase": "Stan Hart"\
-				}]\
-			}\
-		]],\
-	"cover-art": "http://ec1.images-amazon.com/images/P/B00005NF1V.01.LZZZZZZZ.jpg"  \
-\
-}';
-RELEASE
+    $c->res->body($c->stash->{serializer}->serialize('generic', $releasewidget));
 
 };
 
@@ -92,6 +87,8 @@ RELEASE
 
 sub artistwidget : Chained('root') PathPart('artistwidget') Args(0) {
     my ($self, $c) = @_;
+    my $artistwidget = { mbid => "", name => "", releasegroups => []};
+   
     my $mbid = "39c6af62-6918-4d1d-9666-1fc78149ea67";
 
     my $artist_model = $c->model('Artist')->get_by_gid($mbid);
@@ -103,14 +100,12 @@ sub artistwidget : Chained('root') PathPart('artistwidget') Args(0) {
                 $artist_model->id, 3, 0, 'DESC'
     );
 
-#    my @foo = @{ $releases_various[0] };
-
    @releases_various = @{ $releases_various[0] };
    @releases_nonvarious =@{ $releases_nonvarious[0] };
 
-    my $artist_name = $artist_model->name;
-    my $artist_gid = $artist_model->gid;
-    my $release_block = "";
+    $artistwidget->{name} = $artist_model->name;
+    $artistwidget->{mbid} = $artist_model->gid;
+
     my @releases = ();
 
     while(scalar (@releases) < 3) {
@@ -127,33 +122,18 @@ sub artistwidget : Chained('root') PathPart('artistwidget') Args(0) {
     }
 
         foreach my $release (@releases) {
-            my $this_mbid = $release->gid;
-            my $this_title = $release->name;
-            my $this_date = $release->first_release_date->format();
-            $release_block .= <<"RELEASEBLOCK";            
-            {\\
-            "mbid": "$this_mbid",\\
-            "title": "$this_title",\\
-            "date": "$this_date",\\
-            }\\
-RELEASEBLOCK
-        if (!($this_mbid eq $releases[2]->gid))
-            {
-            $release_block .= ',';
-            }
+
+            my $this_release = { mbid => "", title => "", date => "" };
+
+            $this_release->{mbid} = $release->gid;
+            $this_release->{title} = $release->name;
+            $this_release->{date} = $release->first_release_date->format();
+
+            push(@{$artistwidget->{releasegroups}}, $this_release);
         }
 
     $c->res->content_type('text/javascript; charset=utf-8');
-    $c->res->body(<<"ARTIST");
-var artistwidget = '{\\
-	"mbid": "$artist_gid",\\
-	"name": "$artist_name",\\
-\\
-	"release-groups": [\\
-                  $release_block\\
-		]\\
-}';
-ARTIST
+    $c->res->body($c->stash->{serializer}->serialize('generic', $artistwidget));
 
 };
 
