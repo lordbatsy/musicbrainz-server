@@ -53,11 +53,9 @@ sub root : Chained('/') PathPart("ws/widgets") CaptureArgs(0)
 
 # Release widget
 
-sub releasewidget : Chained('root') PathPart('releasewidget') Args(0) {
-    my ($self, $c) = @_;
+sub releasewidget : Chained('root') PathPart('releasewidget') Args(1) {
+    my ($self, $c, $mbid) = @_;
     my $releasewidget = { mbid => "", name => "", artistcredit => [], date =>"", mediums => []};
-   
-    my $mbid = "eefc59f9-9381-4ea3-a256-878aa83d378e";
 
     my $release_model = $c->model('Release')->get_by_gid($mbid);
     $c->model('Release')->load_meta($release_model);
@@ -124,11 +122,9 @@ sub releasewidget : Chained('root') PathPart('releasewidget') Args(0) {
 
 # Artist widget
 
-sub artistwidget : Chained('root') PathPart('artistwidget') Args(0) {
-    my ($self, $c) = @_;
+sub artistwidget : Chained('root') PathPart('artistwidget') Args(1) {
+    my ($self, $c, $mbid) = @_;
     my $artistwidget = { mbid => "", name => "", releasegroups => []};
-   
-    my $mbid = "39c6af62-6918-4d1d-9666-1fc78149ea67";
 
     my $artist_model = $c->model('Artist')->get_by_gid($mbid);
     my @releases_nonvarious = $c->model('ReleaseGroup')->find_by_artist(
