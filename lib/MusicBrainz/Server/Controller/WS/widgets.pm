@@ -55,7 +55,7 @@ sub root : Chained('/') PathPart("ws/widgets") CaptureArgs(0)
 
 sub releasewidget : Chained('root') PathPart('releasewidget') Args(0) {
     my ($self, $c) = @_;
-    my $releasewidget = { mbid => "", name => "", artistcredit => [], date =>"", tracklist => []};
+    my $releasewidget = { mbid => "", name => "", artistcredit => [], date =>"", mediums => []};
    
     my $mbid = "eefc59f9-9381-4ea3-a256-878aa83d378e";
 
@@ -64,6 +64,7 @@ sub releasewidget : Chained('root') PathPart('releasewidget') Args(0) {
 
     $releasewidget->{name} = $release_model->name;
     $releasewidget->{mbid} = $release_model->gid;
+    $releasewidget->{date} = $release_model->date->format();
     $c->model('ArtistCredit')->load($release_model);
 
         foreach my $artist (@{$release_model->artist_credit->names}) {
@@ -75,6 +76,44 @@ sub releasewidget : Chained('root') PathPart('releasewidget') Args(0) {
             $this_artist->{join_phrase} = $artist->{join_phrase};
 
             push(@{$releasewidget->{artistcredit}}, $this_artist);
+        }
+
+    $c->model('Medium')->load_for_releases($release_model);
+    $c->model('Tracklist')->load($release_model);
+    my @tracklists = grep { defined } map { $_->tracklist } $release_model->all_mediums;
+    $c->model('Track')->load_for_tracklists(@tracklists);
+    $c->model('ArtistCredit')->load(map { $_->all_tracks } @tracklists);
+
+        foreach my $medium($release_model->all_mediums) {
+
+            my $this_medium = { name => "", position => "", tracklist => [] };
+
+            $this_medium->{name} = $medium->{name}; 
+            $this_medium->{position} = $medium->{position};
+
+            foreach my $track (@{$medium->tracklist->tracks}) {
+
+                my $this_track = { position => "", name => "", artistcredit => []};
+
+                $this_track->{position} = $track->{position};
+                $this_track->{name} = $track->{name};
+   
+                foreach my $artist (@{$track->artist_credit->names}) {
+
+                    my $this_artist = { mbid => "", link_phrase => "", join_phrase => "" };
+
+                    $this_artist->{mbid} = $artist->{artist}->{gid};
+                    $this_artist->{link_phrase} = $artist->{name};
+                    $this_artist->{join_phrase} = $artist->{join_phrase};
+
+                    push(@{$this_track->{artistcredit}}, $this_artist);
+                }
+
+                push(@{$this_medium->{tracklist}}, $this_track);
+            }
+
+            push(@{$releasewidget->{mediums}}, $this_medium);
+
         }
 
     $c->res->content_type('text/javascript; charset=utf-8');
