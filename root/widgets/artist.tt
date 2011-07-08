@@ -22,33 +22,30 @@
 		<script src="/static/scripts/json.js" type="text/javascript"></script>
 		<script type="text/javascript">
 
-			var artistwidget = jQuery.parseJSON(artistwidget);
+         $(document).ready(function () {
 
-			var artistreleasestring = '';
-			$.each(artistwidget.releases,function (index,value){
+            jQuery.getJSON('/ws/widget/artist/[% mbid %]?callback=?',function(artistwidget) {
 
-				artistreleasestring = artistreleasestring + '<a href="http://www.musicbrainz.org/release/' + value.mbid + '">' + value.title + '</a> (' + value.date + ')<br />';
-				
-			}
-			);
-		console.log(artistreleasestring);
+             var artistreleasestring = '';
+             $.each(artistwidget.releasegroups,function (index,value){
 
-			
+                artistreleasestring = artistreleasestring + '<a href="http://www.musicbrainz.org/release/' + value.mbid + '">' + value.title + '</a> (' + value.date + ')<br />';
+                         }
+         );
+      console.log(artistwidget);
 
+         $('#mb-header').html('<span class="mb-title"><a href="http://www.musicbrainz.org/artist/' + artistwidget.mbid + '">' + artistwidget.name + '</a></span><br />');
 
-                        $(document).ready(function () {
+         $('#mb-releases').html(artistreleasestring);
 
-			$('#mb-header').html('<span class="mb-title"><a href="http://www.musicbrainz.org/artist/' + artistwidget.mbid + '">' + artistwidget.name + '</a></span><br />');
-
-			$('#mb-releases').html(artistreleasestring);
+         });
 
                         });
 
 		</script>
-	</head>
-	
-	<body>
-	
+[%- END -%]
+
+[%- WRAPPER 'layout.tt' -%]	
 <div id="mb-container" class="mb-container">
 	<div id="mb-header" class="mb-header">
 	</div>
@@ -57,8 +54,5 @@
 </div>
 
 </div>
-
-
-	</body>
 
 [%- END -%]

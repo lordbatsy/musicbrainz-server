@@ -1,4 +1,4 @@
-package MusicBrainz::Server::Controller::WS::widgets;
+package MusicBrainz::Server::Controller::WS::widget;
 
 use Moose;
 BEGIN { extends 'MusicBrainz::Server::Controller'; }
@@ -24,7 +24,7 @@ my $ws_defs = Data::OptList::mkopt([
 with 'MusicBrainz::Server::WebService::Validator' =>
 {
      defs => $ws_defs,
-     version => 'widgets',
+     version => 'widget',
      default_serialization_type => 'json',
 };
 
@@ -49,11 +49,11 @@ sub end : Private
 
     my ($self, $c) = @_;
     $c->res->content_type('text/javascript; charset=utf-8');
-    $c->res->body($c->stash->{callback} . '(' . $c->stash->{json} . ')');
+    $c->res->body($c->stash->{args}->{callback} . '(' . $c->stash->{json} . ')');
 
 }
 
-sub root : Chained('/') PathPart("ws/widgets") CaptureArgs(0)
+sub root : Chained('/') PathPart("ws/widget") CaptureArgs(0)
 {
     my ($self, $c) = @_;
     $self->validate($c, \%serializers) or $c->detach('bad_req');
