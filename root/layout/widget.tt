@@ -1,0 +1,3 @@
+<a href="[% c.uri_for_action('/widgets/artist', artist.gid) %]"><img src="http://lampflower.net/mbtest/mbshare.png" /></a>
+
+

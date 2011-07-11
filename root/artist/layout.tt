@@ -33,6 +33,9 @@
                         [% END %]
                     [% END %]
             [%- END -%]
+
+            [% INCLUDE 'layout/widget.tt' label=l('Type:') %]
+
             [%# TODO model country %]
             [% INCLUDE 'layout/sidebar/property.tt' label=l('Country:')
                content=html_escape(artist.country.name)
