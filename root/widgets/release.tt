@@ -1,0 +1,112 @@
+[% BLOCK layout_head %]
+    <style>
+        #mb-coverart img{
+            width: 100px;
+        }
+	
+        .mb-title{
+            font-size: 1.5em;
+        }
+	
+        .mb-trackartist{
+            font-size: .75em;
+        }
+
+        #mb-container{
+            background-color: #c0c0c0;
+            padding: 10px;
+        }
+    </style>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            jQuery.getJSON('/ws/widget/release/[% mbid %]?callback=?', function(releasewidget) {
+
+
+
+                var tracklistgrab = [];
+                $.each(releasewidget.mediums, function(index,medium) {
+                    var labelstring = medium.format + ' ' + medium.position + '<br />';
+                    console.log(labelstring);
+
+                    var trackgrab = [];
+
+                    $.each(medium.tracklist, function (index,track) {
+                        var titlestring = '<a class="mb-tracktitle" href="http://www.musicbrainz.org/recording/' + track.mbid + '">' + track.name + '</a><br />';
+                        trackgrab.push(titlestring);
+
+                        var artistgrab = [];
+
+
+
+                        $.each(track.artistcredit,function (index,credit) {
+                            var artiststring = '<span class="mb-trackartist">(<a href="http://www.musicbrainz.org/artist/' + credit.mbid + '">' + credit['link_phrase'] + '</a>';
+                            if (credit.join_phrase) {
+                                artiststring = artiststring + value['join_phrase'];
+                            }
+                            artiststring = artiststring + ')</span><br />';
+                            artistgrab.push(artiststring);
+                        });
+
+                        trackgrab.push(artistgrab.join(''));
+
+                    });
+
+                    tracklistgrab.push(labelstring + trackgrab.join('') + '<br />');
+
+                    //    });
+                    //});
+                });
+                
+                $('#mb-header').html('<span class="mb-title"><a href="http://musicbrainz.org/release/' + releasewidget.mbid + '">' + releasewidget.name + '</a></span><br />' + '<a href="http://musicbrainz.org/artist/' + releasewidget['artistcredit'][0].mbid + '">' + releasewidget['artistcredit'][0]['link-phrase'] + '</a>');
+
+                $('#mb-tracklist').html(tracklistgrab.join(' '));
+            });
+        });
+
+
+    </script>
+
+
+[%- END -%]
+
+                [% IF (style == 'short') %]
+
+[%- WRAPPER 'layout.tt' -%]
+
+<div id="mb-container" class="mb-container">
+	<div id="mb-header" class="mb-header">
+	</div>
+
+
+</div>
+
+</body>
+
+[%- END -%]
+
+                [% ELSIF (style == 'long') %]
+[%- WRAPPER 'layout.tt' -%]
+
+<div id="mb-container" class="mb-container">
+	<div id="mb-header" class="mb-header">
+	</div>
+
+<div id="mb-coverart" class="mb-coverart">
+</div>
+
+<div id="mb-tracklist" class="mb-list">
+</div>
+
+</div>
+
+</body>
+
+[%- END -%]
+
+                [% ELSE %]
+
+Sorry, that's not a valid style.
+
+[% END %]

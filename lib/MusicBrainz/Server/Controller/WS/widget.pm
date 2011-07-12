@@ -85,17 +85,20 @@ sub release : Chained('root') PathPart('release') Args(1) {
         }
 
     $c->model('Medium')->load_for_releases($release_model);
+    my @mediums = grep { defined } map { $_ } $release_model->all_mediums;
     $c->model('Tracklist')->load($release_model);
-    my @tracklists = grep { defined } map { $_->tracklist } $release_model->all_mediums;
+    my @tracklists = grep { defined } map { $_->tracklist } @mediums;
     $c->model('Track')->load_for_tracklists(@tracklists);
     $c->model('ArtistCredit')->load(map { $_->all_tracks } @tracklists);
+    $c->model('MediumFormat')->load(@mediums);
 
         foreach my $medium($release_model->all_mediums) {
 
-            my $this_medium = { name => "", position => "", tracklist => [] };
+            my $this_medium = { name => "", position => "", format => "", tracklist => [] };
 
             $this_medium->{name} = $medium->{name}; 
             $this_medium->{position} = $medium->{position};
+            $this_medium->{format} = $medium->{format}->{name};
 
             foreach my $track (@{$medium->tracklist->tracks}) {
 

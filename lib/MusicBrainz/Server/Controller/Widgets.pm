@@ -14,6 +14,18 @@ sub artist : Path('artist') Args(1)
 
 }
 
+sub release : Path('release') Args(2)
+{
+
+    my ($self, $c, $style, $mbid) = @_;
+    $c->stash(
+        style => $style,
+        template => 'widgets/release.tt',
+        mbid => $mbid,
+    );
+
+}
+
 
 =head1 LICENSE
 

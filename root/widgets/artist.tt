@@ -20,22 +20,22 @@
 
 		<script type="text/javascript">
 
-         $(document).ready(function () {
+        $(document).ready(function () {
 
             jQuery.getJSON('/ws/widget/artist/[% mbid %]?callback=?',function(artistwidget) {
 
-             var artistreleasestring = '';
-             $.each(artistwidget.releasegroups,function (index,value){
+            var artistreleasestring = '';
+            $.each(artistwidget.releasegroups,function (index,value){
 
                 artistreleasestring = artistreleasestring + '<a href="http://www.musicbrainz.org/release-group/' + value.mbid + '">' + value.title + '</a> (' + value.date + ')<br />';
-                         }
-         );
+                }
+            );
 
-         $('#mb-header').html('<span class="mb-title"><a href="http://www.musicbrainz.org/artist/' + artistwidget.mbid + '">' + artistwidget.name + '</a></span><br />');
+            $('#mb-header').html('<span class="mb-title"><a href="http://www.musicbrainz.org/artist/' + artistwidget.mbid + '">' + artistwidget.name + '</a></span><br />');
 
-         $('#mb-releases').html(artistreleasestring);
+            $('#mb-releases').html(artistreleasestring);
 
-         });
+            });
 
                         });
 
